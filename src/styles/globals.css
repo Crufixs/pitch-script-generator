@@ -1,0 +1,121 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Geologica:wght@400;500;600;700&display=swap");
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* :root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-rgb: 255, 255, 255;
+    --background-start-rgb: 0, 0, 0;
+    --background-end-rgb: 0, 0, 0;
+  }
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+      to bottom,
+      transparent,
+      rgb(var(--background-end-rgb))
+    )
+    rgb(var(--background-start-rgb));
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+} */
+
+.blur-background {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(
+    255,
+    255,
+    255,
+    0.25
+  ); /* Adjust the color and opacity as needed */
+  backdrop-filter: blur(10px); /* Apply the blur effect */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+textarea,
+button,
+input {
+  outline: none;
+  border-width: 1px;
+  border-radius: 8px;
+  padding: 0.5rem
+}
+textarea,
+button {
+  -webkit-box-shadow: none;
+  -moz-box-shadow: none;
+  box-shadow: none;
+  resize: none; /*remove the resize handle on the bottom right*/
+}
+
+button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.secondary-button {
+  transition: border-radius 0.2s ease;
+  background-color: white;
+  border: 1; /* Ensure no border to maintain clean look */
+  border-radius: 0.5rem; /* Adjust border radius as needed */
+}
+
+.primary-button {
+  transition: border-radius 0.2s ease-in;
+  background-color: rgba(45, 27, 71, 1);
+  border: none; /* Ensure no border to maintain clean look */
+  border-radius: 0.5rem; /* Adjust border radius as needed */
+}
+
+.primary-button:hover, .secondary-button:hover {
+  border-radius: 1rem; /* Adjust border radius as needed */
+}
+
+.primary-button span {
+  color: white;
+}
+
+.primary-button span, .secondary-button span {
+  display:flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.primary-button:hover span, .secondary-button:hover span {
+  background: linear-gradient(to right, #EE7299, #8B8EF8);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent; /* Apply the gradient text on hover */
+}
+
+
+
+@media (max-width: 640px) {
+  .pitch-deck-background {
+    background: linear-gradient(
+      rgba(238, 114, 153, 0.5),
+      rgba(139, 142, 248, 0.5),
+      rgba(255, 255, 255, 0.45)
+    ); 
+  }
+}
