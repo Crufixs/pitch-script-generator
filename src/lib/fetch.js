@@ -45,6 +45,24 @@ export async function saveData(pitchDeck, chats) {
   return response.json();
 }
 
+// export async function refreshData(pitchDeck, chats) {
+//   const chatHistory = convertChatHistory(chats);
+
+//   const response = await fetch("/api/data", {
+//     method: "POST",
+//     headers: {
+//       "Content-Type": "application/json",
+//     },
+//     body: JSON.stringify({
+//       content: pitchDeck,
+//       chatHistory,
+//       action: "REFRESH",
+//     }),
+//   });
+
+//   return response.json();
+// }
+
 export async function updateData(id, pitchDeck, chats) {
   const chatHistory = convertChatHistory(chats);
 

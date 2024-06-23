@@ -16,7 +16,6 @@ export async function POST(req) {
         break;
     }
 
-    console.log("TESTRAWR response", response);
     return NextResponse.json({ ...response });
   } catch (error) {
     console.error(error);
@@ -66,7 +65,6 @@ export async function updatePitchDeckAndChats(id, content, chatHistory) {
 }
 
 export async function createNewPitch(content, chatHistory) {
-  console.log("TESTRAWR chathistory", chatHistory);
   const newPitchDeck = await prisma.pitchDeck.create({
     data: {
       content: JSON.stringify(content),
@@ -86,6 +84,5 @@ export async function createNewPitch(content, chatHistory) {
     // },
   });
 
-  console.log("Created new PitchDeck:", newPitchDeck);
   return newPitchDeck;
 }

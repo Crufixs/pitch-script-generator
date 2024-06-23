@@ -9,9 +9,6 @@ const openai = new OpenAI({
 export async function POST(req) {
   const { message, chatHistory, action } = await req.json();
   let script;
-  console.log("chatHistory", chatHistory);
-  console.log("message", message);
-  console.log("action", action);
 
   try {
     // const promptMessage = `Generate a pitch script about: ${prompt}. Each section should not be longer than ${time} minutes. Additional Instructions include: ${additionalInstructions}.`;
@@ -249,10 +246,7 @@ export async function POST(req) {
       // max_tokens: 1500,
     });
 
-    console.log("response", response);
-
     let responseMessage = response.choices[0].message;
-    console.log("responseMessage", responseMessage);
     if (responseMessage.tool_calls) {
       let toolCalls = responseMessage.tool_calls;
 
@@ -269,7 +263,6 @@ export async function POST(req) {
       responseMessage: responseMessage.content,
     });
   } catch (error) {
-    console.log("Testrawr error", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

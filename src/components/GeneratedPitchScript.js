@@ -21,14 +21,16 @@ export default function GeneratedPitchScript({ pitchDeck, width }) {
       }`}
     >
       {width > 640 && (
-        <div className="flex flex-col md:flex-row md:items-center justify-between mb-5 ">
-          <p className="font-geologica md:text-lg font-medium">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-5 ">
+          <p className="font-geologica lg:text-lg font-medium">
             Your Generated Pitch Script
           </p>
           <p>
             {totalTime
               ? totalTime > 60
-                ? `${(totalTime / 60).toFixed(2)} minutes`
+                ? `${Math.floor(totalTime / 60) % 60} minutes${
+                    totalTime % 60 > 0 ? ` and ${totalTime % 60} seconds` : ""
+                  }`
                 : `${totalTime} seconds`
               : null}
           </p>

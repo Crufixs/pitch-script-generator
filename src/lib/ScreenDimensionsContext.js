@@ -1,5 +1,5 @@
 "use client";
-import React, { createContext, useState, useEffect } from 'react';
+import React, { createContext, useState, useEffect } from "react";
 
 const ScreenDimensionsContext = createContext();
 
@@ -18,9 +18,9 @@ export const ScreenDimensionsProvider = ({ children }) => {
     };
 
     handleResize(); // Set initial dimensions
-    window.addEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
     return () => {
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener("resize", handleResize);
     };
   }, []);
 

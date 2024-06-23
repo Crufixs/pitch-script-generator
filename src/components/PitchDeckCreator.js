@@ -7,7 +7,14 @@ import { IoSend, IoMicOutline, IoChatbubbleEllipses } from "react-icons/io5";
 import { chatOpenAi, generatePitchDeck } from "@lib/fetch";
 
 export default function PitchDeckCreator(props) {
-  const { setIsLoading, setLoadingProgress, sleep, setPitchDeck } = props;
+  const {
+    setIsLoading,
+    setLoadingProgress,
+    sleep,
+    setPitchDeck,
+    cancelledRef,
+  } = props;
+
   const [formAnswers, setFormAnswers] = useState({
     prompt: "",
     time: "",
@@ -25,9 +32,13 @@ export default function PitchDeckCreator(props) {
       setLoadingProgress(progress);
     }
 
-    setPitchDeck(pitchArr);
-    setIsLoading(false);
-    setLoadingProgress(0);
+    if (cancelledRef && cancelledRef.current) {
+      cancelledRef.current = false;
+    } else {
+      setPitchDeck(pitchArr);
+      setIsLoading(false);
+      setLoadingProgress(0);
+    }
   }
 
   return props.width > 640 ? (
@@ -46,6 +57,7 @@ export default function PitchDeckCreator(props) {
     />
   );
 }
+
 const Role = Object.freeze({
   USER: "user",
   ASSISTANT: "assistant",
@@ -56,8 +68,15 @@ const PitchDeckCreatorDesktop = ({
   sleep,
   chats,
   setChats,
+  disableButtons,
+  setDisableButtons,
 }) => {
   const handleChat = async (message) => {
+    if (disableButtons) {
+      return;
+    }
+    setDisableButtons(true);
+
     let currChat = [...chats];
     addChat(message, Role.USER);
 
@@ -82,6 +101,7 @@ const PitchDeckCreatorDesktop = ({
     } catch (error) {
       console.error("Error generating script:", error);
     }
+    setDisableButtons(false);
   };
 
   function addChat(content, role) {
@@ -127,18 +147,18 @@ const PitchDeckCreatorDesktop = ({
   };
 
   return (
-    <div className="w-full py-5 flex flex-col h-full overflow-y-auto">
-      <div className="flex pb-5 px-5 items-start gap-x-5 border-b">
-        <div className="p-7 rounded-full bg-gray-200"></div>
+    <div className="w-full py-5 pt-3 lg:py-5 flex flex-col h-full overflow-y-auto">
+      <div className="flex pb-3 lg:pb-5 px-3 lg:px-5 items-center gap-x-3 lg:gap-x-5 border-b">
+        <div className="p-5 lg:p-7 rounded-full bg-gray-200"></div>
         <div className="flex flex-col">
-          <p className="font-geologica text-xl">Fornax</p>
-          <p className="text-lg">Pitch Deck Creator</p>
+          <p className="font-geologica text-lg lg:text-xl">Fornax</p>
+          <p className="text-md lg:text-lg">Pitch Deck Creator</p>
         </div>
       </div>
       <div className="p-5 gap-y-5 flex flex-col-reverse grow overflow-y-auto">
         {isTyping && (
           <div className="flex w-full justify-end items-end gap-x-5 text-white">
-            <div className="p-3 bg-indigo-400 rounded-3xl rounded-br-none">
+            <div className="ml-16 p-3 bg-indigo-400 rounded-3xl rounded-br-none">
               <p className="px-1 flex">
                 <GoDotFill className="my-1" />
                 <GoDotFill className="my-1" />
@@ -160,7 +180,7 @@ const PitchDeckCreatorDesktop = ({
               key={chat.chatOrder}
               className="flex w-full justify-end items-end gap-x-5 text-white"
             >
-              <div className="p-3 bg-indigo-400 rounded-3xl rounded-br-none">
+              <div className="ml-16 p-3 bg-indigo-400 rounded-3xl rounded-br-none">
                 <p className="px-1">{chat.content}</p>
               </div>
               <Image
@@ -179,7 +199,7 @@ const PitchDeckCreatorDesktop = ({
               <div className="flex relative bg-indigo-50 w-10 h-10 rounded-full shrink-0">
                 <IoChatbubbleEllipses className="text-indigo-400 w-5 h-5 m-auto" />
               </div>
-              <div className="p-3 bg-indigo-50 rounded-3xl rounded-bl-none">
+              <div className="mr-16 p-3 bg-indigo-50 rounded-3xl rounded-bl-none">
                 <p className="px-1">{chat.content}</p>
               </div>
             </div>
@@ -197,6 +217,7 @@ const PitchDeckCreatorDesktop = ({
           onKeyDown={handleTyping}
           onChange={(e) => setInputValue(e.target.value)}
           value={inputValue}
+          readOnly={disableButtons}
         />
         {inputValue ? (
           <div
@@ -229,6 +250,8 @@ const PitchDeckCreatorMobile = ({
   chats,
   setChats,
   setShowGeneratedPitchScript,
+  disableButtons,
+  setDisableButtons,
 }) => {
   const [prompt, setPrompt] = useState("");
   const [time, setTime] = useState(0);
@@ -246,7 +269,7 @@ const PitchDeckCreatorMobile = ({
       return;
     }
 
-    setChats([
+    let tempChats = [
       {
         chatOrder: 0,
         content: "What would you like to pitch about?",
@@ -281,18 +304,18 @@ const PitchDeckCreatorMobile = ({
             },
           ]
         : []),
-    ]);
-    handleGeneratePitchDeck();
+    ];
+    handleGeneratePitchDeck(tempChats);
   }
 
-  const handleGeneratePitchDeck = async () => {
-    let currChat = [...chats];
-    let chatHistory = currChat.map((chat) => {
-      return { role: chat.role.toString(), content: chat.content };
-    });
-
+  const handleGeneratePitchDeck = async (tempChats) => {
+    if (disableButtons) {
+      return;
+    }
+    setDisableButtons(true);
+    setChats(tempChats);
     try {
-      const { script } = await generatePitchDeck(currChat);
+      const { script } = await generatePitchDeck(tempChats);
 
       if (script) {
         let parsedData = JSON.parse(script);
@@ -303,12 +326,13 @@ const PitchDeckCreatorMobile = ({
             ...parsedData[key],
           };
         });
-        updatePitchDeck(pitchArray);
+        await updatePitchDeck(pitchArray);
         setShowGeneratedPitchScript(true);
       }
     } catch (error) {
       console.error("Error generating script:", error);
     }
+    setDisableButtons(false);
   };
 
   return (
@@ -372,6 +396,7 @@ const PitchDeckCreatorMobile = ({
       </div>
       <button
         className="primary-button w-full p-5 text-xl"
+        disabled={disableButtons}
         onClick={() => handleSubmit()}
       >
         <span>Generate Pitch Script</span>

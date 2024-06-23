@@ -7,7 +7,6 @@ const Role = Object.freeze({
 });
 
 export default async function Page({ params }) {
-  console.log("params", params);
   let { id } = params;
 
   let pitchData = await getPitchDeck(id);
@@ -29,8 +28,6 @@ export default async function Page({ params }) {
     return new Date(a.dateReceived) - new Date(b.dateReceived);
   });
 
-  console.log("TESTRAWR sortedChat", sortedChat)
-
   let loadedPitchData = JSON.parse(pitchData.content);
   let loadedChatData = sortedChat.map((chat, index) => {
     return {
@@ -42,6 +39,10 @@ export default async function Page({ params }) {
   });
 
   return (
-    <Home pitchId={id} loadedPitchData={loadedPitchData} loadedChatData={loadedChatData} />
+    <Home
+      pitchId={id}
+      loadedPitchData={loadedPitchData}
+      loadedChatData={loadedChatData}
+    />
   );
 }

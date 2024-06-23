@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useMemo, useContext } from "react";
+import { useState, useEffect, useRef, useContext } from "react";
 import GeneratedPitchScript from "@components/GeneratedPitchScript";
 import PitchDeckCreator from "@components/PitchDeckCreator";
 import HeaderAndFooter from "@/components/HeaderAndFooter";
@@ -10,6 +10,7 @@ export default function Home({ pitchId, loadedPitchData, loadedChatData }) {
   const { width, height } = useContext(ScreenDimensionsContext);
   const [isLoading, setIsLoading] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
+  const [disableButtons, setDisableButtons] = useState(false);
   const [pitchDeck, setPitchDeck] = useState(
     loadedPitchData
       ? loadedPitchData
@@ -90,12 +91,15 @@ export default function Home({ pitchId, loadedPitchData, loadedChatData }) {
     setPitchDeck,
     isLoading,
     setIsLoading,
+    loadingProgress,
     setLoadingProgress,
     width,
     sleep,
     chats,
     setChats,
     pitchId,
+    disableButtons,
+    setDisableButtons,
   };
 
   const HeaderAndFooterProps = {
@@ -103,6 +107,10 @@ export default function Home({ pitchId, loadedPitchData, loadedChatData }) {
     chats,
     width,
     pitchId,
+    isLoading,
+    setIsLoading,
+    disableButtons,
+    setDisableButtons,
   };
 
   return (
@@ -117,12 +125,15 @@ export default function Home({ pitchId, loadedPitchData, loadedChatData }) {
           PitchDeckCreatorProps={PitchDeckCreatorProps}
           HeaderAndFooterProps={HeaderAndFooterProps}
           isLoading={isLoading}
+          loadingProgress={loadingProgress}
         />
       ) : (
         <MobileHome
           GeneratedPitchScriptProps={GeneratedPitchScriptProps}
           PitchDeckCreatorProps={PitchDeckCreatorProps}
           HeaderAndFooterProps={HeaderAndFooterProps}
+          isLoading={isLoading}
+          loadingProgress={loadingProgress}
         />
       )}
     </main>
@@ -164,28 +175,47 @@ const MobileHome = ({
   GeneratedPitchScriptProps,
   PitchDeckCreatorProps,
   HeaderAndFooterProps,
+  isLoading,
+  loadingProgress,
 }) => {
   const [showGeneratedPitchScript, setShowGeneratedPitchScript] =
     useState(false);
 
+  const cancelledRef = useRef(null);
   return (
     <div className="pitch-deck-background">
       <HeaderAndFooter
         {...HeaderAndFooterProps}
         setShowGeneratedPitchScript={setShowGeneratedPitchScript}
         showGeneratedPitchScript={showGeneratedPitchScript}
+        cancelledRef={cancelledRef}
       >
-        {showGeneratedPitchScript ? (
-          <GeneratedPitchScript
-            {...GeneratedPitchScriptProps}
-            setShowGeneratedPitchScript={setShowGeneratedPitchScript}
-          />
-        ) : (
-          <PitchDeckCreator
-            {...PitchDeckCreatorProps}
-            setShowGeneratedPitchScript={setShowGeneratedPitchScript}
-          />
-        )}
+        <div className="relative">
+          {showGeneratedPitchScript ? (
+            <GeneratedPitchScript
+              {...GeneratedPitchScriptProps}
+              setShowGeneratedPitchScript={setShowGeneratedPitchScript}
+            />
+          ) : (
+            <PitchDeckCreator
+              {...PitchDeckCreatorProps}
+              cancelledRef={cancelledRef}
+              setShowGeneratedPitchScript={setShowGeneratedPitchScript}
+              showGeneratedPitchScript={showGeneratedPitchScript}
+            />
+          )}
+          {isLoading && (
+            <div className="flex absolute left-0 top-0 bottom-0 right-0 bg-white">
+              <div className="m-auto px-8 sm:px-16 flex flex-col items-center">
+                <p className="px-10 text-center text-base">
+                  Generating your pitch script. <br />
+                  This may take a few seconds.
+                </p>
+                <ProgressBar percentage={loadingProgress} />
+              </div>
+            </div>
+          )}{" "}
+        </div>
       </HeaderAndFooter>
     </div>
   );
