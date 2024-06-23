@@ -79,12 +79,31 @@ export default function Home({ pitchId, loadedPitchData, loadedChatData }) {
     return new Promise((resolve) => setTimeout(resolve, ms));
   };
 
+  function convertToMarkdown(slides) {
+    return slides
+      .map((slide) => {
+        let markdown = "";
+        if (slide.title) {
+          markdown += `## ${slide.title}\n\n`;
+        }
+        if (slide.content) {
+          markdown += `${slide.content}\n\n`;
+        }
+        if (slide.time) {
+          markdown += `*Time: ${slide.time} seconds*\n\n`;
+        }
+        return markdown;
+      })
+      .join("\n");
+  }
+
   const GeneratedPitchScriptProps = {
     isLoading,
     loadingProgress,
     pitchDeck,
     width,
     pitchId,
+    convertToMarkdown,
   };
 
   const PitchDeckCreatorProps = {
@@ -111,6 +130,7 @@ export default function Home({ pitchId, loadedPitchData, loadedChatData }) {
     setIsLoading,
     disableButtons,
     setDisableButtons,
+    convertToMarkdown,
   };
 
   return (

@@ -16,6 +16,7 @@ export default function HeaderAndFooter(props) {
     pitchId,
     disableButtons,
     setDisableButtons,
+    convertToMarkdown,
   } = props;
 
   const handleGenerateLink = async () => {
@@ -49,24 +50,7 @@ export default function HeaderAndFooter(props) {
     let markDownFormat = convertToMarkdown(pitchDeck);
     navigator.clipboard.writeText(markDownFormat);
   };
-
-  function convertToMarkdown(slides) {
-    return slides
-      .map((slide) => {
-        let markdown = "";
-        if (slide.title) {
-          markdown += `## ${slide.title}\n\n`;
-        }
-        if (slide.content) {
-          markdown += `${slide.content}\n\n`;
-        }
-        if (slide.time) {
-          markdown += `*Time: ${slide.time} seconds*\n\n`;
-        }
-        return markdown;
-      })
-      .join("\n");
-  }
+  
   return width > 640 ? (
     <HeaderAndFooterDesktop
       {...props}
