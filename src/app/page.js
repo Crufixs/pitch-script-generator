@@ -1,200 +1,195 @@
 "use client";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useContext } from "react";
 import GeneratedPitchScript from "@components/GeneratedPitchScript";
 import PitchDeckCreator from "@components/PitchDeckCreator";
-import Header from "@components/Header";
+import HeaderAndFooter from "@/components/HeaderAndFooter";
+import ProgressBar from "@components/ProgressBar";
+import ScreenDimensionsContext from "@lib/ScreenDimensionsContext";
 
-export default function Home() {
-  const [pitchDeck, setPitchDeck] = useState([
-    {
-      title: "Introduction",
-      content: null,
-      time: null,
-    },
-    {
-      title: "Hook",
-      content: null,
-      time: null,
-    },
-    {
-      title: "Problem Statement",
-      content: null,
-      time: null,
-    },
-    {
-      title: "Solution",
-      content: null,
-      time: null,
-    },
-    {
-      title: "Market Opportunity",
-      content: null,
-      time: null,
-    },
-    {
-      title: "Business Model",
-      content: null,
-      time: null,
-    },
-    {
-      title: "Traction",
-      content: null,
-      time: null,
-    },
-    {
-      title: "Go-to-Market Strategy",
-      content: null,
-      time: null,
-    },
-    {
-      title: "Team",
-      content: null,
-      time: null,
-    },
-    {
-      title: "Financials and Projections",
-      content: null,
-      time: null,
-    },
-    {
-      title: "Closing",
-      content: null,
-      time: null,
-    },
-  ]);
+export default function Home({ pitchId, loadedPitchData, loadedChatData }) {
+  const { width, height } = useContext(ScreenDimensionsContext);
   const [isLoading, setIsLoading] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
-
-  const [windowSize, setWindowSize] = useState({
-    width: null,
-    height: null,
-  });
-
-  const { width, height } = useMemo(() => {
-    return windowSize;
-  }, [windowSize]);
-
-  useEffect(() => {
-    // Handler to call on window resize
-    const handleResize = () => {
-      setWindowSize({
-        width: window.innerWidth,
-        height: window.innerHeight,
-      });
-    };
-
-    // Add event listener
-    window.addEventListener("resize", handleResize);
-
-    // Call handler right away so state gets updated with initial window size
-    handleResize();
-
-    // Remove event listener on cleanup
-    return () => window.removeEventListener("resize", handleResize);
-  }, []); // Empty array ensures that effect is only run on mount and unmount
-
-  function resetPitchDeck() {
-    setPitchDeck([
-      {
-        title: "Introduction",
-        content: null,
-        time: null,
-      },
-      {
-        title: "Hook",
-        content: null,
-        time: null,
-      },
-      {
-        title: "Problem Statement",
-        content: null,
-        time: null,
-      },
-      {
-        title: "Solution",
-        content: null,
-        time: null,
-      },
-      {
-        title: "Market Opportunity",
-        content: null,
-        time: null,
-      },
-      {
-        title: "Business Model",
-        content: null,
-        time: null,
-      },
-      {
-        title: "Traction",
-        content: null,
-        time: null,
-      },
-      {
-        title: "Go-to-Market Strategy",
-        content: null,
-        time: null,
-      },
-      {
-        title: "Team",
-        content: null,
-        time: null,
-      },
-      {
-        title: "Financials and Projections",
-        content: null,
-        time: null,
-      },
-      {
-        title: "Closing",
-        content: null,
-        time: null,
-      },
-    ]);
-  }
+  const [pitchDeck, setPitchDeck] = useState(
+    loadedPitchData
+      ? loadedPitchData
+      : [
+          {
+            title: "Introduction",
+            content: null,
+            time: null,
+          },
+          {
+            title: "Hook",
+            content: null,
+            time: null,
+          },
+          {
+            title: "Problem Statement",
+            content: null,
+            time: null,
+          },
+          {
+            title: "Solution",
+            content: null,
+            time: null,
+          },
+          {
+            title: "Market Opportunity",
+            content: null,
+            time: null,
+          },
+          {
+            title: "Business Model",
+            content: null,
+            time: null,
+          },
+          {
+            title: "Traction",
+            content: null,
+            time: null,
+          },
+          {
+            title: "Go-to-Market Strategy",
+            content: null,
+            time: null,
+          },
+          {
+            title: "Team",
+            content: null,
+            time: null,
+          },
+          {
+            title: "Financials and Projections",
+            content: null,
+            time: null,
+          },
+          {
+            title: "Closing",
+            content: null,
+            time: null,
+          },
+        ]
+  );
+  const [chats, setChats] = useState(loadedChatData ? loadedChatData : []);
+  // Mobile State
 
   const sleep = async (ms) => {
     return new Promise((resolve) => setTimeout(resolve, ms));
   };
 
+  const GeneratedPitchScriptProps = {
+    isLoading,
+    loadingProgress,
+    pitchDeck,
+    width,
+    pitchId,
+  };
+
+  const PitchDeckCreatorProps = {
+    setPitchDeck,
+    isLoading,
+    setIsLoading,
+    setLoadingProgress,
+    width,
+    sleep,
+    chats,
+    setChats,
+    pitchId,
+  };
+
+  const HeaderAndFooterProps = {
+    pitchDeck,
+    chats,
+    width,
+    pitchId,
+  };
+
   return (
-    <main className="h-screen w-screen flex flex-col pitch-deck-background">
-      <Header />
+    <main className="h-screen w-screen flex flex-col">
       {width === null ? (
         <div className="m-auto flex items-center justify-center">
           <p className="text-5xl font-medium">Loading...</p>
         </div>
       ) : width > 640 ? (
-        <div className="grid sm:grid-cols-2 flex-grow overflow-y-auto">
-          <GeneratedPitchScript
-            pitchDeck={pitchDeck}
-            isLoading={isLoading}
-            loadingProgress={loadingProgress}
-          />
-          <PitchDeckCreator
-            resetPitchDeck={resetPitchDeck}
-            setPitchDeck={setPitchDeck}
-            isLoading={isLoading}
-            setIsLoading={setIsLoading}
-            setLoadingProgress={setLoadingProgress}
-            width={width}
-            sleep={sleep}
-          />
-        </div>
-      ) : (
-        <PitchDeckCreator
-          resetPitchDeck={resetPitchDeck}
-          setPitchDeck={setPitchDeck}
+        <DesktopHome
+          GeneratedPitchScriptProps={GeneratedPitchScriptProps}
+          PitchDeckCreatorProps={PitchDeckCreatorProps}
+          HeaderAndFooterProps={HeaderAndFooterProps}
           isLoading={isLoading}
-          setIsLoading={setIsLoading}
-          setLoadingProgress={setLoadingProgress}
-          width={width}
-          sleep={sleep}
+        />
+      ) : (
+        <MobileHome
+          GeneratedPitchScriptProps={GeneratedPitchScriptProps}
+          PitchDeckCreatorProps={PitchDeckCreatorProps}
+          HeaderAndFooterProps={HeaderAndFooterProps}
         />
       )}
     </main>
   );
 }
+
+const DesktopHome = ({
+  GeneratedPitchScriptProps,
+  PitchDeckCreatorProps,
+  HeaderAndFooterProps,
+  isLoading,
+  loadingProgress,
+}) => {
+  return (
+    <>
+      <HeaderAndFooter {...HeaderAndFooterProps}>
+        <div className="grid sm:grid-cols-2 flex-grow overflow-y-auto">
+          <div className="relative overflow-y-auto">
+            <GeneratedPitchScript {...GeneratedPitchScriptProps} />
+            {isLoading && (
+              <div className="flex absolute left-0 top-0 blur-background w-full h-full">
+                <div className="m-auto px-8 sm:px-16 flex flex-col items-center">
+                  <p className="px-10 text-center font-geologica text-xl">
+                    Generating your pitch script. This may take a few seconds.
+                  </p>
+                  <ProgressBar percentage={loadingProgress} />
+                </div>
+              </div>
+            )}
+          </div>
+          <PitchDeckCreator {...PitchDeckCreatorProps} />
+        </div>
+      </HeaderAndFooter>
+    </>
+  );
+};
+
+const MobileHome = ({
+  GeneratedPitchScriptProps,
+  PitchDeckCreatorProps,
+  HeaderAndFooterProps,
+}) => {
+  const [showGeneratedPitchScript, setShowGeneratedPitchScript] =
+    useState(false);
+
+  return (
+    <div className="pitch-deck-background">
+      <HeaderAndFooter
+        {...HeaderAndFooterProps}
+        setShowGeneratedPitchScript={setShowGeneratedPitchScript}
+        showGeneratedPitchScript={showGeneratedPitchScript}
+      >
+        {showGeneratedPitchScript ? (
+          <GeneratedPitchScript
+            {...GeneratedPitchScriptProps}
+            setShowGeneratedPitchScript={setShowGeneratedPitchScript}
+          />
+        ) : (
+          <PitchDeckCreator
+            {...PitchDeckCreatorProps}
+            setShowGeneratedPitchScript={setShowGeneratedPitchScript}
+          />
+        )}
+      </HeaderAndFooter>
+    </div>
+  );
+};
 
 // export default function Home() {
 //   return (

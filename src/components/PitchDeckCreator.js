@@ -4,165 +4,107 @@ import "@styles/PitchDeckCreator.css";
 import UserProfile from "@public/user_icon.png";
 import { GoPaperclip, GoDotFill } from "react-icons/go";
 import { IoSend, IoMicOutline, IoChatbubbleEllipses } from "react-icons/io5";
+import { chatOpenAi, generatePitchDeck } from "@lib/fetch";
 
 export default function PitchDeckCreator(props) {
-  const { setIsLoading, setLoadingProgress, setPitchDeck, sleep } = props;
+  const { setIsLoading, setLoadingProgress, sleep, setPitchDeck } = props;
   const [formAnswers, setFormAnswers] = useState({
     prompt: "",
     time: "",
     additionalInstructions: "",
   });
 
-  async function updatePitchDeck() {
+  async function updatePitchDeck(pitchArr) {
     setIsLoading(true);
     let progress = 0;
 
-    let pitchArrPromise = handleGenerateScript();
-    while (progress < 75) {
+    // let pitchArrPromise = handleGenerateScript();
+    while (progress < 100) {
       await sleep(1000);
       progress += 25;
       setLoadingProgress(progress);
     }
 
-    let pitchArr = await pitchArrPromise;
-    setLoadingProgress(progress);
-
-    await sleep(1000);
     setPitchDeck(pitchArr);
     setIsLoading(false);
     setLoadingProgress(0);
   }
 
-  const handleGenerateScript = async () => {
-    let { prompt, time, additionalInstructions } = formAnswers;
-
-    try {
-      const response = await fetch("/api/generate-script", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ prompt, time, additionalInstructions }),
-      });
-
-      const data = await response.json();
-      let parsedData = JSON.parse(data.script);
-      console.log("PARSED", parsedData);
-
-      const pitchArray = Object.keys(parsedData).map((key) => {
-        return {
-          title: key,
-          ...parsedData[key],
-        };
-      });
-      
-      return pitchArray;
-    } catch (error) {
-      console.error("Error generating script:", error);
-    }
-    return [];
-  };
-
   return props.width > 640 ? (
     <PitchDeckCreatorDesktop
       formAnswers={formAnswers}
       setFormAnswers={setFormAnswers}
-      handleGenerateScript={updatePitchDeck}
+      updatePitchDeck={updatePitchDeck}
       {...props}
     />
   ) : (
     <PitchDeckCreatorMobile
       formAnswers={formAnswers}
       setFormAnswers={setFormAnswers}
-      handleGenerateScript={updatePitchDeck}
+      updatePitchDeck={updatePitchDeck}
       {...props}
     />
   );
 }
+const Role = Object.freeze({
+  USER: "user",
+  ASSISTANT: "assistant",
+});
 
 const PitchDeckCreatorDesktop = ({
   updatePitchDeck,
-  resetPitchDeck,
   sleep,
-  formAnswers,
-  setFormAnswers,
-  handleGenerateScript,
+  chats,
+  setChats,
 }) => {
-  const [chats, setChats] = useState([]);
+  const handleChat = async (message) => {
+    let currChat = [...chats];
+    addChat(message, Role.USER);
 
-  function addChat(value, isUser) {
+    try {
+      const { script, responseMessage } = await chatOpenAi(message, currChat);
+
+      if (responseMessage) {
+        addChat(responseMessage, Role.ASSISTANT);
+      }
+
+      if (script) {
+        let parsedData = JSON.parse(script);
+
+        const pitchArray = Object.keys(parsedData).map((key) => {
+          return {
+            title: key,
+            ...parsedData[key],
+          };
+        });
+        updatePitchDeck(pitchArray);
+      }
+    } catch (error) {
+      console.error("Error generating script:", error);
+    }
+  };
+
+  function addChat(content, role) {
     setChats((e) => {
       let lastOrder = e[e.length - 1]?.chatOrder || 0;
       return [
         ...e,
         {
           chatOrder: lastOrder + 1,
-          message: value,
-          isUserChat: isUser,
+          content,
+          role,
         },
       ];
     });
   }
 
   useEffect(() => {
-    sleep(500).then(() => {
-      addChat(`What would you like to pitch about?`, false);
-    });
+    if (!chats || chats.length === 0) {
+      sleep(500).then(() => {
+        addChat(`What would you like to pitch about?`, Role.ASSISTANT);
+      });
+    }
   }, []);
-
-  useEffect(() => {
-    let lastChat = chats[chats.length - 1] || null;
-
-    if (!lastChat || !lastChat.isUserChat) {
-      return;
-    }
-
-    let botMessage = "";
-    if (!formAnswers.time) {
-      botMessage = `Great, what would you like your pitch length to be in minutes? The recommended length for a pitch is 3-5 minutes.`;
-    } else if (!formAnswers.additionalInstructions) {
-      botMessage = `Wonderful! Do you have any additional instructions or specifications on tone or structure?`;
-    } else {
-      handleGenerateScript();
-      return;
-    }
-
-    if (botMessage)
-      sleep(1500).then(() => {
-        addChat(botMessage, false);
-      });
-  }, [formAnswers]);
-
-  useEffect(() => {
-    let lastChat = chats[chats.length - 1] || null;
-
-    if (!lastChat?.isUserChat) {
-      return;
-    }
-
-    if (!formAnswers.prompt) {
-      setFormAnswers((prev) => {
-        return {
-          ...prev,
-          prompt: lastChat.message,
-        };
-      });
-    } else if (!formAnswers.time) {
-      setFormAnswers((prev) => {
-        return {
-          ...prev,
-          time: lastChat.message,
-        };
-      });
-    } else if (!formAnswers.additionalInstructions) {
-      setFormAnswers((prev) => {
-        return {
-          ...prev,
-          additionalInstructions: lastChat.message,
-        };
-      });
-    }
-  }, [chats]);
 
   const [isTyping, setIsTyping] = useState(false);
   const [inputValue, setInputValue] = useState("");
@@ -171,7 +113,7 @@ const PitchDeckCreatorDesktop = ({
   const handleTyping = (event) => {
     let value = event.target.value;
     if (event.key === "Enter" && value) {
-      addChat(value, true);
+      handleChat(value);
       setInputValue("");
       setIsTyping(false);
       clearTimeout(typingTimeoutRef.current);
@@ -192,8 +134,6 @@ const PitchDeckCreatorDesktop = ({
           <p className="font-geologica text-xl">Fornax</p>
           <p className="text-lg">Pitch Deck Creator</p>
         </div>
-        <button onClick={updatePitchDeck}>Set</button>
-        <button onClick={resetPitchDeck}>Reset</button>
       </div>
       <div className="p-5 gap-y-5 flex flex-col-reverse grow overflow-y-auto">
         {isTyping && (
@@ -215,13 +155,13 @@ const PitchDeckCreatorDesktop = ({
           </div>
         )}
         {[...chats].reverse().map((chat) =>
-          chat.isUserChat ? (
+          chat.role === Role.USER ? (
             <div
               key={chat.chatOrder}
               className="flex w-full justify-end items-end gap-x-5 text-white"
             >
               <div className="p-3 bg-indigo-400 rounded-3xl rounded-br-none">
-                <p className="px-1">{chat.message}</p>
+                <p className="px-1">{chat.content}</p>
               </div>
               <Image
                 src={UserProfile}
@@ -240,7 +180,7 @@ const PitchDeckCreatorDesktop = ({
                 <IoChatbubbleEllipses className="text-indigo-400 w-5 h-5 m-auto" />
               </div>
               <div className="p-3 bg-indigo-50 rounded-3xl rounded-bl-none">
-                <p className="px-1">{chat.message}</p>
+                <p className="px-1">{chat.content}</p>
               </div>
             </div>
           )
@@ -262,7 +202,7 @@ const PitchDeckCreatorDesktop = ({
           <div
             className="rounded-full p-2 border border-indigo-400 cursor-pointer"
             onClick={() => {
-              addChat(value, true);
+              handleChat(value);
               setInputValue("");
             }}
           >
@@ -285,7 +225,10 @@ const PitchDeckCreatorDesktop = ({
 const PitchDeckCreatorMobile = ({
   formAnswers,
   setFormAnswers,
-  handleGenerateScript,
+  updatePitchDeck,
+  chats,
+  setChats,
+  setShowGeneratedPitchScript,
 }) => {
   const [prompt, setPrompt] = useState("");
   const [time, setTime] = useState(0);
@@ -303,18 +246,70 @@ const PitchDeckCreatorMobile = ({
       return;
     }
 
-    setFormAnswers({
-      prompt,
-      time,
-      additionalInstructions,
-    });
+    setChats([
+      {
+        chatOrder: 0,
+        content: "What would you like to pitch about?",
+        role: Role.ASSISTANT,
+      },
+      {
+        chatOrder: 1,
+        content: prompt,
+        role: Role.USER,
+      },
+      {
+        chatOrder: 2,
+        content: "Input your pitch length in minutes",
+        role: Role.ASSISTANT,
+      },
+      {
+        chatOrder: 3,
+        content: `${time} minutes`,
+        role: Role.USER,
+      },
+      ...(additionalInstructions
+        ? [
+            {
+              chatOrder: 4,
+              content: "Input additional instructions or specifications",
+              role: Role.ASSISTANT,
+            },
+            {
+              chatOrder: 5,
+              content: additionalInstructions,
+              role: Role.USER,
+            },
+          ]
+        : []),
+    ]);
+    handleGeneratePitchDeck();
   }
 
-  useEffect(() => {
-    if (formAnswers.time && formAnswers.prompt) {
-      handleGenerateScript();
+  const handleGeneratePitchDeck = async () => {
+    let currChat = [...chats];
+    let chatHistory = currChat.map((chat) => {
+      return { role: chat.role.toString(), content: chat.content };
+    });
+
+    try {
+      const { script } = await generatePitchDeck(currChat);
+
+      if (script) {
+        let parsedData = JSON.parse(script);
+
+        const pitchArray = Object.keys(parsedData).map((key) => {
+          return {
+            title: key,
+            ...parsedData[key],
+          };
+        });
+        updatePitchDeck(pitchArray);
+        setShowGeneratedPitchScript(true);
+      }
+    } catch (error) {
+      console.error("Error generating script:", error);
     }
-  }, [formAnswers]);
+  };
 
   return (
     <div className="p-5 flex flex-col gap-y-5">
@@ -356,7 +351,7 @@ const PitchDeckCreatorMobile = ({
           <input
             type="text"
             value={time}
-            className="text-center secondary-button w-12 cursor-pointer"
+            className="text-center w-12"
             readOnly
           ></input>
           <button

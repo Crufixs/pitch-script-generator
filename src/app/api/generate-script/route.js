@@ -7,11 +7,17 @@ const openai = new OpenAI({
 });
 
 export async function POST(req) {
-  const { prompt, time, additionalInstructions } = await req.json();
+  const { message, chatHistory, action } = await req.json();
   let script;
-  try {
-    const promptMessage = `Generate a pitch script about: ${prompt}. Each section should not be longer than ${time} minutes. Additional Instructions include: ${additionalInstructions}.`;
+  console.log("chatHistory", chatHistory);
+  console.log("message", message);
+  console.log("action", action);
 
+  try {
+    // const promptMessage = `Generate a pitch script about: ${prompt}. Each section should not be longer than ${time} minutes. Additional Instructions include: ${additionalInstructions}.`;
+
+    // const promptMessage =
+    //   "Can you help me with making a pitch script about dinosaurs, make sure its total amount is 5 mintues long";
     const tools = [
       {
         type: "function",
@@ -32,7 +38,7 @@ export async function POST(req) {
                   time: {
                     type: "integer",
                     description:
-                      "Amount of time the Introduction section should take",
+                      "Amount of seconds the Introduction section should take",
                   },
                 },
               },
@@ -46,7 +52,8 @@ export async function POST(req) {
                   },
                   time: {
                     type: "integer",
-                    description: "Amount of time the Hook section should take",
+                    description:
+                      "Amount of seconds the Hook section should take",
                   },
                 },
               },
@@ -61,7 +68,7 @@ export async function POST(req) {
                   time: {
                     type: "integer",
                     description:
-                      "Amount of time the Problem Statement section should take",
+                      "Amount of seconds the Problem Statement section should take",
                   },
                 },
               },
@@ -76,7 +83,7 @@ export async function POST(req) {
                   time: {
                     type: "integer",
                     description:
-                      "Amount of time the Solution section should take",
+                      "Amount of seconds the Solution section should take",
                   },
                 },
               },
@@ -91,7 +98,7 @@ export async function POST(req) {
                   time: {
                     type: "integer",
                     description:
-                      "Amount of time the Market Opportunity section should take",
+                      "Amount of seconds the Market Opportunity section should take",
                   },
                 },
               },
@@ -106,7 +113,7 @@ export async function POST(req) {
                   time: {
                     type: "integer",
                     description:
-                      "Amount of time the Business Model section should take",
+                      "Amount of seconds the Business Model section should take",
                   },
                 },
               },
@@ -121,7 +128,7 @@ export async function POST(req) {
                   time: {
                     type: "integer",
                     description:
-                      "Amount of time the Traction section should take",
+                      "Amount of seconds the Traction section should take",
                   },
                 },
               },
@@ -136,7 +143,7 @@ export async function POST(req) {
                   time: {
                     type: "integer",
                     description:
-                      "Amount of time the Go-to-Market Strategy section should take",
+                      "Amount of seconds the Go-to-Market Strategy section should take",
                   },
                 },
               },
@@ -150,7 +157,8 @@ export async function POST(req) {
                   },
                   time: {
                     type: "integer",
-                    description: "Amount of time the Team section should take",
+                    description:
+                      "Amount of seconds the Team section should take",
                   },
                 },
               },
@@ -165,7 +173,7 @@ export async function POST(req) {
                   time: {
                     type: "integer",
                     description:
-                      "Amount of time the Financials and Projections section should take",
+                      "Amount of seconds the Financials and Projections section should take",
                   },
                 },
               },
@@ -180,7 +188,7 @@ export async function POST(req) {
                   time: {
                     type: "integer",
                     description:
-                      "Amount of time the Closing section should take",
+                      "Amount of seconds the Closing section should take",
                   },
                 },
               },
@@ -203,33 +211,48 @@ export async function POST(req) {
       },
     ];
 
+    let messages = [];
+    let tool_choice;
+    switch (action) {
+      case "CHAT":
+        messages = [
+          {
+            role: "system",
+            content:
+              "You are an assistant that helps generate pitch scripts for various " +
+              "purposes, such as business presentations, product pitches, and investor " +
+              "meetings. Before creating a pitch script, you need to first ask " +
+              "descriptions on what the pitch script is about and then what is the total " +
+              "time the pitch should take. Then ask them if they have any additional instructions",
+          },
+          ...chatHistory,
+          {
+            role: "user",
+            content: message,
+          },
+        ];
+        tool_choice = "auto";
+        break;
+      case "GENERATE":
+        messages = [...chatHistory];
+        tool_choice = "required";
+        break;
+      default:
+        break;
+    }
+
     const response = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
-      messages: [
-        {
-          role: "system",
-          content:
-            "You are an assistant that helps generate pitch scripts for various" +
-            "purposes, such as business presentations, product pitches, and investor" +
-            "meetings.",
-        },
-        {
-          role: "user",
-          content: promptMessage,
-        },
-      ],
+      messages,
       tools,
-      tool_choice: {
-        type: "function",
-        function: {
-          name: "get_presentation",
-        },
-      },
+      tool_choice,
       // max_tokens: 1500,
     });
 
-    let responseMessage = response.choices[0].message;
+    console.log("response", response);
 
+    let responseMessage = response.choices[0].message;
+    console.log("responseMessage", responseMessage);
     if (responseMessage.tool_calls) {
       let toolCalls = responseMessage.tool_calls;
 
@@ -241,8 +264,12 @@ export async function POST(req) {
       script = JSON.stringify(functionResponses[0]);
     }
 
-    return NextResponse.json({ script });
+    return NextResponse.json({
+      script,
+      responseMessage: responseMessage.content,
+    });
   } catch (error) {
+    console.log("Testrawr error", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
